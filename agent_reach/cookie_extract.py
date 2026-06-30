@@ -36,6 +36,12 @@ PLATFORM_SPECS = [
         "cookies": None,  # grab all — xq_a_token + session cookies required
         "config_key": "xueqiu",
     },
+    {
+        "name": "Google/NotebookLM",
+        "domains": [".google.com", "notebooklm.google.com"],
+        "cookies": ["SID", "HSID", "SSID", "APISID", "SAPISID"],
+        "config_key": "notebooklm",
+    },
 ]
 
 
@@ -293,5 +299,17 @@ def configure_from_browser(browser: str, config) -> List[Tuple[str, bool, str]]:
             results_list.append(("Xueqiu", False,
                                  f"找到 {len(cookie_str.split(';'))} 个 Cookie 但缺少 xq_a_token，"
                                  f"请先在 {browser} 中登录 xueqiu.com"))
+
+    if "notebooklm" in extracted:
+        gc = extracted["notebooklm"]
+        if "SID" in gc and "HSID" in gc:
+            for k, v in gc.items():
+                config.set(f"notebooklm_{k.lower()}", v)
+            found_keys = [k for k in gc.keys() if k in ["SID", "HSID", "SSID", "APISID", "SAPISID"]]
+            results_list.append(("Google/NotebookLM", True, f"{len(found_keys)} cookies"))
+        else:
+            found = ", ".join(gc.keys())
+            results_list.append(("Google/NotebookLM", False,
+                                 f"缺少 SID/HSID。请先在 {browser} 中登录 Google 账号。"))
 
     return results_list
